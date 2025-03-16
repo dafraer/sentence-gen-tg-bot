@@ -2,13 +2,17 @@ package gemini
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
 )
 
-const geminiFlash = "gemini-1.5-flash"
+const (
+	geminiFlash   = "gemini-1.5-flash"
+	requestString = "Give me a simple %s sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to %s seperated by ; symbol"
+)
 
 type Client struct {
 	client *genai.Client
@@ -53,4 +57,8 @@ func (c *Client) Request(ctx context.Context, request string) (string, error) {
 	}
 
 	return response.String(), nil
+}
+
+func FormatRequestString(level, sentenceLanguage, word, language string) string {
+	return fmt.Sprintf(requestString, level, sentenceLanguage, word, language)
 }
