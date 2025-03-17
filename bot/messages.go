@@ -70,6 +70,11 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 	}
 	//First sentence is in target language second is in user's language
 	sentences := strings.Split(res, ";")
+	//Check if the sentences were not generated
+	//TODO: fix this shit
+	if len(sentences) < 2 {
+		return nil
+	}
 	if language(update.Message.From) == russian {
 		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(responseMsgRu, sentences[0], sentences[1]), ParseMode: models.ParseModeMarkdown}); err != nil {
 			return err
