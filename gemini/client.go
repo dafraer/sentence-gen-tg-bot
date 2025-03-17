@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	geminiFlash   = "gemini-1.5-flash"
-	requestString = "Give me a simple %s level sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to %s seperated by ; symbol"
+	geminiFlash     = "gemini-1.5-flash"
+	requestStringEn = "Give me a simple %s level sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to english seperated by ; symbol"
+	requestStringRu = "Дай мне простое предложение уровня %s на %s с словом %s. Не объясняй мне ничего, просто дай предложение и перевод на русский через символ ; "
 )
 
 type Client struct {
@@ -60,5 +61,8 @@ func (c *Client) Request(ctx context.Context, request string) (string, error) {
 }
 
 func FormatRequestString(level, sentenceLanguage, word, language string) string {
-	return fmt.Sprintf(requestString, level, sentenceLanguage, word, language)
+	if language == "ru" {
+		return fmt.Sprintf(requestStringRu, level, sentenceLanguage, word)
+	}
+	return fmt.Sprintf(requestStringEn, level, sentenceLanguage, word)
 }

@@ -15,6 +15,7 @@ import (
 const (
 	english            = "en"
 	russian            = "ru"
+	maxMessageLen      = 100 //bytes
 	waitingForLanguage = iota
 	waitingForWord
 )

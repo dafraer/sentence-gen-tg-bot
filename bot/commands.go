@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/dafraer/sentence-gen-tg-bot/db"
 	tgbotapi "github.com/go-telegram/bot"
@@ -35,7 +36,9 @@ func (b *Bot) processCommand(ctx context.Context, update *models.Update) error {
 }
 
 func (b *Bot) processStartCommand(ctx context.Context, update *models.Update) error {
-	b.store.SaveUser(ctx, &db.User{ChatId: update.Message.Chat.ID, UserName: update.Message.From.Username})
+	if err := b.store.SaveUser(ctx, &db.User{ChatId: update.Message.Chat.ID, UserName: update.Message.From.Username}); err != nil {
+		return err
+	}
 	if language(update.Message.From) == russian {
 		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: startMsgRu}); err != nil {
 			return err
@@ -49,12 +52,15 @@ func (b *Bot) processStartCommand(ctx context.Context, update *models.Update) er
 }
 
 func (b *Bot) processPreferencesCommand(ctx context.Context, update *models.Update) error {
+	if err := b.store.UpdateUserState(ctx, strconv.Itoa(int(update.Message.Chat.ID)), waitingForLanguage); err != nil {
+		return err
+	}
 	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{Text: chooseLangRu}); err != nil {
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangRu}); err != nil {
 			return err
 		}
 	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{Text: chooseLangEn}); err != nil {
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangEn}); err != nil {
 			return err
 		}
 	}

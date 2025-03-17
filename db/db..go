@@ -47,7 +47,7 @@ func (store *Store) GetUser(ctx context.Context, chatId string) (*User, error) {
 		SentenceLanguage: data["SentenceLanguage"].(string),
 		Level:            data["Level"].(string),
 		PremiumUntil:     data["PremiumUntil"].(int64),
-		State:            data["State"].(int),
+		State:            int(data["State"].(int64)),
 	}, nil
 }
 

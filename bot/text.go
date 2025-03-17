@@ -30,7 +30,7 @@ const (
 	Пример: Если вы изучаете испанский, введите "Испанский", а не "spanish" или "Espanol".`
 	chooseLangEn = `
 	🌍 Please select the language you are learning!
-	Enter the language name in a clear and correct format (e.g., English, Spanish, French).
+	Enter the language name in a clear and correct format (e.g., english, Spanish, French).
 	Incorrect formatting may lead to inaccurate results.
 	Example: If you are learning Spanish, type "Spanish", not "Espanol" or "Espagnol."`
 	chooseLevelRu    = "Пожалуйста, выберите уровень языка для ваших предложений!"
@@ -43,4 +43,8 @@ const (
 	Now you can send the words for which you’d like to generate sentences. Just type them in one by one, and I’ll do the rest!`
 	unknownCommandRu = "Sorry, I don't know this command"
 	unknownCommandEn = "Извините, я не знаю такой команды"
+	responseMsgRu    = "Вот ваше предложение и перевод на русский:\n``` %s```\n``` %s```"
+	responseMsgEn    = "Here is your sentence and english translation:\n``` %s```\n``` %s```"
+	tooLongMsgEn     = "Sorry, your message is too long"
+	tooLongMsgRu     = "Извините, ваше сообщение слишком длинное"
 )
