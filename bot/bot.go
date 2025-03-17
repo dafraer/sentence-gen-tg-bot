@@ -2,12 +2,21 @@ package bot
 
 import (
 	"context"
+	"log"
+	"strings"
 
 	"github.com/dafraer/sentence-gen-tg-bot/db"
 	"github.com/dafraer/sentence-gen-tg-bot/gemini"
 	"github.com/go-telegram/bot"
 	tgbotapi "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+)
+
+const (
+	english            = "en"
+	russian            = "ru"
+	waitingForLanguage = iota
+	waitingForWord
 )
 
 type Bot struct {
@@ -17,20 +26,66 @@ type Bot struct {
 }
 
 func New(token string, store *db.Store, geminiClient *gemini.Client) (*Bot, error) {
-	b, err := tgbotapi.New(token)
+	bot := &Bot{store: store, geminiClient: geminiClient}
+	b, err := tgbotapi.New(token, tgbotapi.WithDefaultHandler(bot.defaultHandler))
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{b, store, geminiClient}, nil
+	bot.b = b
+	return bot, nil
 }
 
 func (b *Bot) Run(ctx context.Context) error {
-	b.b.RegisterHandler(bot.HandlerTypeMessageText, "/start", tgbotapi.MatchTypeExact, b.startHandler)
 	b.b.Start(ctx)
 	return nil
 }
 
-func (b *Bot) startHandler(ctx context.Context, _ *bot.Bot, update *models.Update) {
-	b.store.SaveUser(ctx, &db.User{ChatId: update.Message.Chat.ID, UserName: update.Message.From.Username, Lang: update.Message.From.LanguageCode})
-	b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: "Hello Friend"})
+func (b *Bot) defaultHandler(ctx context.Context, _ *bot.Bot, update *models.Update) {
+	switch {
+	case update.CallbackQuery != nil:
+		if err := b.processCallbackQuery(ctx, update); err != nil {
+			log.Println(err)
+		}
+	case update.Message != nil:
+		if strings.HasPrefix(update.Message.Text, "/") {
+			if err := b.processCommand(ctx, update); err != nil {
+				log.Println(err)
+			}
+		} else {
+			if err := b.processMessage(ctx, update); err != nil {
+				log.Println(err)
+			}
+		}
+	}
+}
+
+// Returns user's language code if its russian or english, else returns english
+func language(user *models.User) string {
+	switch user.LanguageCode {
+	case "ru":
+		return russian
+	default:
+		return english
+	}
+}
+
+// levelsMarkup returns inline keyboard markup for selecting language level
+func levelsMarkup() *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{
+				{Text: "A1", CallbackData: "A1"},
+			}, {
+				{Text: "A2", CallbackData: "A2"},
+			}, {
+				{Text: "B1", CallbackData: "B1"},
+			}, {
+				{Text: "B2", CallbackData: "B2"},
+			}, {
+				{Text: "C1", CallbackData: "C1"},
+			}, {
+				{Text: "C2", CallbackData: "C2"},
+			},
+		},
+	}
 }

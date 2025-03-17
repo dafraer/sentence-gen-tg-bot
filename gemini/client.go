@@ -11,7 +11,7 @@ import (
 
 const (
 	geminiFlash   = "gemini-1.5-flash"
-	requestString = "Give me a simple %s sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to %s seperated by ; symbol"
+	requestString = "Give me a simple %s level sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to %s seperated by ; symbol"
 )
 
 type Client struct {
