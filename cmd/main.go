@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/dafraer/sentence-gen-tg-bot/text"
+	"github.com/dafraer/sentence-gen-tg-bot/tts"
 	"os"
 
 	"github.com/dafraer/sentence-gen-tg-bot/bot"
@@ -17,10 +19,13 @@ func main() {
 	geminiAPIKey := os.Args[2]
 	ctx := context.TODO()
 
+	//Create firestore client
 	store, err := db.New(ctx)
 	if err != nil {
 		panic(err)
 	}
+
+	//Create gemini client
 	geminiClient, err := gemini.New(ctx, geminiAPIKey)
 	if err != nil {
 		panic(err)
@@ -31,7 +36,22 @@ func main() {
 		}
 	}()
 
-	myBot, err := bot.New(token, store, geminiClient)
+	//Create tts client
+	ttsClient, err := tts.New(ctx)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := ttsClient.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	//Load messages
+	msgs := text.Load()
+
+	//Create bot
+	myBot, err := bot.New(token, store, geminiClient, ttsClient, msgs)
 	if err != nil {
 		panic(err)
 	}

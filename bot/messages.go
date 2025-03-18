@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strconv"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/dafraer/sentence-gen-tg-bot/gemini"
 
-	"github.com/dafraer/sentence-gen-tg-bot/db"
 	tgbotapi "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -25,34 +25,12 @@ func (b *Bot) processMessage(ctx context.Context, update *models.Update) error {
 		return err
 	}
 	switch user.State {
-	case waitingForLanguage:
-		if err := b.processLanguage(ctx, update, user); err != nil {
-			return err
-		}
 	case waitingForWord:
 		if err := b.processWord(ctx, update); err != nil {
 			return err
 		}
 	default:
 		if err := b.processUnknownCommand(ctx, update); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (b *Bot) processLanguage(ctx context.Context, update *models.Update, user *db.User) error {
-	user.SentenceLanguage = update.Message.Text
-	user.State = waitingForWord
-	if err := b.store.SaveUser(ctx, user); err != nil {
-		return err
-	}
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLevelRu, ReplyMarkup: levelsMarkup()}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLevelEn, ReplyMarkup: levelsMarkup()}); err != nil {
 			return err
 		}
 	}
@@ -73,30 +51,34 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 	//Check if the sentences were not generated
 	//TODO: fix this shit
 	if len(sentences) < 2 {
-		return nil
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.BadRequest[language(update.Message.From)]}); err != nil {
+			return err
+		}
 	}
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(responseMsgRu, sentences[0], sentences[1]), ParseMode: models.ParseModeMarkdown}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(responseMsgEn, sentences[0], sentences[1]), ParseMode: models.ParseModeMarkdown}); err != nil {
-			return err
-		}
+	audio, err := b.tts.Generate(ctx, sentences[0], user.SentenceLanguage)
+	if err != nil {
+		return err
+	}
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(b.messages.ResponseMsg[language(update.Message.From)], sentences[0], sentences[1]), ParseMode: models.ParseModeMarkdown}); err != nil {
+		return err
+	}
+
+	//Send audio
+	params := &tgbotapi.SendDocumentParams{
+		ChatID:   update.Message.Chat.ID,
+		Document: &models.InputFileUpload{Filename: "audio.mp3", Data: bytes.NewReader(audio.AudioContent)},
+	}
+
+	if _, err := b.b.SendDocument(ctx, params); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (b *Bot) processMessageTooLong(ctx context.Context, update *models.Update) error {
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: tooLongMsgRu}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: tooLongMsgEn}); err != nil {
-			return err
-		}
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.TooLong[language(update.Message.From)]}); err != nil {
+		return err
 	}
 	return nil
 }

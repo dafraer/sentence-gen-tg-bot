@@ -39,14 +39,8 @@ func (b *Bot) processStartCommand(ctx context.Context, update *models.Update) er
 	if err := b.store.SaveUser(ctx, &db.User{ChatId: update.Message.Chat.ID, UserName: update.Message.From.Username}); err != nil {
 		return err
 	}
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: startMsgRu}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: startMsgEn}); err != nil {
-			return err
-		}
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.Start[language(update.Message.From)]}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -56,11 +50,11 @@ func (b *Bot) processPreferencesCommand(ctx context.Context, update *models.Upda
 		return err
 	}
 	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangRu}); err != nil {
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangRu, ReplyMarkup: languageMarkupRu()}); err != nil {
 			return err
 		}
 	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangEn}); err != nil {
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangEn, ReplyMarkup: languageMarkupEn()}); err != nil {
 			return err
 		}
 	}
@@ -68,14 +62,8 @@ func (b *Bot) processPreferencesCommand(ctx context.Context, update *models.Upda
 }
 
 func (b *Bot) processHelpCommand(ctx context.Context, update *models.Update) error {
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: helpMsgRu}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: helpMsgEn}); err != nil {
-			return err
-		}
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.Help[language(update.Message.From)]}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -85,14 +73,8 @@ func (b *Bot) processPremiumCommand(ctx context.Context, update *models.Update) 
 }
 
 func (b *Bot) processUnknownCommand(ctx context.Context, update *models.Update) error {
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: unknownCommandRu}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: unknownCommandEn}); err != nil {
-			return err
-		}
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.UnknownCommand[language(update.Message.From)]}); err != nil {
+		return err
 	}
 	return nil
 }

@@ -23,16 +23,8 @@ const (
 	/help – View this list of commands and their explanations.
 	/premium – Unlock unlimited access to sentence generation with a premium subscription.
 	Need more assistance? Just send me a message - @dafraer`
-	chooseLangRu = `
-	🌍 Пожалуйста, отправьте название языка, который вы изучаете!
-	Введите название языка в правильном формате на русском (например, Английский, Испанский, Французский).  
-	⚠️Неправильный формат может привести к некорректным результатам.  
-	Пример: Если вы изучаете испанский, введите "Испанский", а не "spanish" или "Espanol".`
-	chooseLangEn = `
-	🌍 Please select the language you are learning!
-	Enter the language name in a clear and correct format (e.g., english, Spanish, French).
-	Incorrect formatting may lead to inaccurate results.
-	Example: If you are learning Spanish, type "Spanish", not "Espanol" or "Espagnol."`
+	chooseLangRu     = "🌍 Пожалуйста, выберите название языка, который вы изучаете!"
+	chooseLangEn     = "🌍 Please select the language you are learning!"
 	chooseLevelRu    = "Пожалуйста, выберите уровень языка для ваших предложений!"
 	chooseLevelEn    = "Please choose the language level for your sentences!"
 	preferencesSetRu = `
