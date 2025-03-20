@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dafraer/sentence-gen-tg-bot/gemini"
 
@@ -20,7 +20,7 @@ func (b *Bot) processMessage(ctx context.Context, update *models.Update) error {
 			return err
 		}
 	}
-	user, err := b.store.GetUser(ctx, strconv.Itoa(int(update.Message.Chat.ID)))
+	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
 		return err
 	}
@@ -38,10 +38,19 @@ func (b *Bot) processMessage(ctx context.Context, update *models.Update) error {
 }
 
 func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
-	user, err := b.store.GetUser(ctx, strconv.Itoa(int(update.Message.Chat.ID)))
+	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
 		return err
 	}
+
+	//Check if user can generate sentences
+	if user.FreeSentences <= 0 && time.Unix(user.PremiumUntil, 0).Before(time.Now()) && time.Unix(user.LastUsed, 0).After(time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)) {
+		if err := b.sendInvoice(ctx, update, b.messages.PremiumTitle[language(update.Message.From)], b.messages.LimitReached[language(update.Message.From)]); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	res, err := b.geminiClient.Request(ctx, gemini.FormatRequestString(user.Level, user.SentenceLanguage, update.Message.Text, update.Message.From.LanguageCode))
 	if err != nil {
 		return err
@@ -73,6 +82,14 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 		return err
 	}
 
+	//Update user
+	user.LastUsed = time.Now().Unix()
+	if time.Unix(user.PremiumUntil, 0).Before(time.Now()) {
+		user.FreeSentences--
+	}
+	if err := b.store.SaveUser(ctx, user); err != nil {
+		return err
+	}
 	return nil
 }
 

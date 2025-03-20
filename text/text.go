@@ -1,15 +1,20 @@
 package text
 
 type Messages struct {
-	Start          map[string]string
-	Help           map[string]string
-	Lang           map[string]string
-	Level          map[string]string
-	PreferencesSet map[string]string
-	UnknownCommand map[string]string
-	ResponseMsg    map[string]string
-	TooLong        map[string]string
-	BadRequest     map[string]string
+	Start             map[string]string
+	Help              map[string]string
+	Lang              map[string]string
+	Level             map[string]string
+	PreferencesSet    map[string]string
+	UnknownCommand    map[string]string
+	ResponseMsg       map[string]string
+	TooLong           map[string]string
+	BadRequest        map[string]string
+	Premium           map[string]string
+	LimitReached      map[string]string
+	PremiumTitle      map[string]string
+	SuccessfulPayment map[string]string
+	FailedPayment     map[string]string
 }
 
 func Load() *Messages {
@@ -71,6 +76,42 @@ func Load() *Messages {
 	msgs.BadRequest = map[string]string{
 		"ru": "Извините, я не могу составить предложение с этим словом",
 		"en": "Sorry, I can't make a sentence with that word.",
+	}
+	msgs.Premium = map[string]string{
+		"ru": `
+		💎 Оформите Premium и получите месяц безлимитного доступа! 💎
+		Открывайте все функции и генерируйте бесконечные предложения! 🚀 Подписка покрывает расходы на API и поддерживает разработчика. 💙
+		Оформите Premium и учитесь без ограничений! ✨`,
+		"en": `
+		💎 Go Premium for 1 Month of Unlimited Access! 💎
+		Unlock all features and generate endless sentences! 🚀 Premium helps cover API costs and supports the creator. 💙
+		Upgrade now and keep learning without limits! ✨`,
+	}
+	msgs.LimitReached = map[string]string{
+		"ru": `
+		🚨 Дневной лимит исчерпан! 🚨
+		Вы использовали 50 бесплатных предложений. Хотите безлимитный доступ? 🚀
+		Оформите Premium, чтобы продолжать обучение и поддержать бота! 💙✨`,
+		"en": `
+		🚨 Daily Limit Reached! 🚨
+		You've used all 50 free sentences for today. Want unlimited access? 🚀
+		Upgrade to Premium to keep learning and support the bot! 💙✨`,
+	}
+	msgs.PremiumTitle = map[string]string{
+		"ru": "Премиум",
+		"en": "Premium",
+	}
+	msgs.SuccessfulPayment = map[string]string{
+		"ru": `
+		✅ Оплата успешно обработана! ✅
+		Теперь у вас неограниченный доступ к боту на 1 месяц. Спасибо за поддержку! Желаем вам успехов в изучении языков! 📚✨`,
+		"en": `
+		✅ Payment successfully processed! ✅
+		You now have unlimited access for 1 month. Thank you for your support! Wishing you success in your language learning journey! 📚✨`,
+	}
+	msgs.FailedPayment = map[string]string{
+		"ru": "Извините, что-то пошло не так. Напишите @dafraer для решения проблемы",
+		"en": "Sorry, something went wrong. Write @dafraer to solve your issue",
 	}
 	return &msgs
 }

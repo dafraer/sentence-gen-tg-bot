@@ -20,6 +20,8 @@ type User struct {
 	Level            string //e.g. A1
 	PremiumUntil     int64  //unix time
 	State            int
+	LastUsed         int64 //unix time
+	FreeSentences    int   //how many more free sentences can user generate
 }
 
 func New(ctx context.Context) (*Store, error) {
@@ -35,8 +37,8 @@ func (store *Store) SaveUser(ctx context.Context, user *User) error {
 	return err
 }
 
-func (store *Store) GetUser(ctx context.Context, chatId string) (*User, error) {
-	res, err := store.db.Collection("users").Doc(chatId).Get(ctx)
+func (store *Store) GetUser(ctx context.Context, chatId int64) (*User, error) {
+	res, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -48,11 +50,13 @@ func (store *Store) GetUser(ctx context.Context, chatId string) (*User, error) {
 		Level:            data["Level"].(string),
 		PremiumUntil:     data["PremiumUntil"].(int64),
 		State:            int(data["State"].(int64)),
+		LastUsed:         data["LastUsed"].(int64),
+		FreeSentences:    int(data["FreeSentences"].(int64)),
 	}, nil
 }
 
-func (store *Store) UpdateUserState(ctx context.Context, chatId string, state int) error {
-	_, err := store.db.Collection("users").Doc(chatId).Update(ctx, []firestore.Update{
+func (store *Store) UpdateUserState(ctx context.Context, chatId int64, state int) error {
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Update(ctx, []firestore.Update{
 		{
 			Path:  "State",
 			Value: state,
@@ -64,8 +68,8 @@ func (store *Store) UpdateUserState(ctx context.Context, chatId string, state in
 	return nil
 }
 
-func (store *Store) UpdateUserPremium(ctx context.Context, chatId string, premiumUntil int64) error {
-	_, err := store.db.Collection("users").Doc(chatId).Update(ctx, []firestore.Update{
+func (store *Store) UpdateUserPremium(ctx context.Context, chatId int64, premiumUntil int64) error {
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Update(ctx, []firestore.Update{
 		{
 			Path:  "PremiumUntil",
 			Value: premiumUntil,
@@ -77,8 +81,8 @@ func (store *Store) UpdateUserPremium(ctx context.Context, chatId string, premiu
 	return nil
 }
 
-func (store *Store) UpdateUserLevel(ctx context.Context, chatId string, level string) error {
-	_, err := store.db.Collection("users").Doc(chatId).Update(ctx, []firestore.Update{
+func (store *Store) UpdateUserLevel(ctx context.Context, chatId int64, level string) error {
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Update(ctx, []firestore.Update{
 		{
 			Path:  "Level",
 			Value: level,
@@ -90,7 +94,7 @@ func (store *Store) UpdateUserLevel(ctx context.Context, chatId string, level st
 	return nil
 }
 
-func (store *Store) DeleteUser(ctx context.Context, chatId string) error {
-	_, err := store.db.Collection("users").Doc(chatId).Delete(ctx)
+func (store *Store) DeleteUser(ctx context.Context, chatId int64) error {
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Delete(ctx)
 	return err
 }

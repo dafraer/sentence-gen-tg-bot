@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	geminiModel     = "gemini-2.0-pro-exp-02-05"
+	geminiModel     = "gemini-1.5-flash"
 	requestStringEn = "Give me a simple %s level sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to english seperated by ; symbol"
 	requestStringRu = "Дай мне простое предложение уровня %s на %s с словом %s. Не объясняй мне ничего, просто дай предложение и перевод на русский через символ ; "
 )

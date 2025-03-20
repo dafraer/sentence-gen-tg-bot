@@ -4,7 +4,6 @@ import (
 	"context"
 	tgbotapi "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	"strconv"
 )
 
 func (b *Bot) processCallbackQuery(ctx context.Context, update *models.Update) error {
@@ -22,7 +21,7 @@ func (b *Bot) processCallbackQuery(ctx context.Context, update *models.Update) e
 }
 
 func (b *Bot) processLanguageCallback(ctx context.Context, update *models.Update) error {
-	user, err := b.store.GetUser(ctx, strconv.Itoa(int(update.CallbackQuery.From.ID)))
+	user, err := b.store.GetUser(ctx, update.CallbackQuery.From.ID)
 	if err != nil {
 		return err
 	}
@@ -43,11 +42,11 @@ func (b *Bot) processLanguageCallback(ctx context.Context, update *models.Update
 
 func (b *Bot) processLevelCallback(ctx context.Context, update *models.Update) error {
 	//Update user level
-	if err := b.store.UpdateUserLevel(ctx, strconv.Itoa(int(update.CallbackQuery.From.ID)), update.CallbackQuery.Data); err != nil {
+	if err := b.store.UpdateUserLevel(ctx, update.CallbackQuery.From.ID, update.CallbackQuery.Data); err != nil {
 		return err
 	}
 	//Update user state
-	if err := b.store.UpdateUserState(ctx, strconv.Itoa(int(update.CallbackQuery.From.ID)), waitingForWord); err != nil {
+	if err := b.store.UpdateUserState(ctx, update.CallbackQuery.From.ID, waitingForWord); err != nil {
 		return err
 	}
 	//Delete message with inline keyboard

@@ -6,6 +6,7 @@ import (
 	"github.com/dafraer/sentence-gen-tg-bot/tts"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/dafraer/sentence-gen-tg-bot/db"
 	"github.com/dafraer/sentence-gen-tg-bot/gemini"
@@ -15,10 +16,12 @@ import (
 )
 
 const (
-	english            = "en"
-	russian            = "ru"
-	maxMessageLen      = 100 //bytes
-	waitingForLanguage = iota
+	freeSentencesAmount   = 50
+	premiumPrice          = 1 //Premium subscription price in Telegram Stars
+	english               = "en"
+	russian               = "ru"
+	maxMessageLen         = 100 //bytes
+	waitingForPreferences = iota
 	waitingForWord
 )
 
@@ -47,21 +50,77 @@ func (b *Bot) Run(ctx context.Context) error {
 
 func (b *Bot) defaultHandler(ctx context.Context, _ *bot.Bot, update *models.Update) {
 	switch {
+	case update.PreCheckoutQuery != nil:
+		if err := b.processPreCheckoutQuery(ctx, update); err != nil {
+			log.Println(err)
+		}
 	case update.CallbackQuery != nil:
 		if err := b.processCallbackQuery(ctx, update); err != nil {
 			log.Println(err)
 		}
 	case update.Message != nil:
-		if strings.HasPrefix(update.Message.Text, "/") {
+		switch {
+		case update.Message.SuccessfulPayment != nil:
+			if err := b.processSuccessfulPayment(ctx, update); err != nil {
+				log.Println(err)
+				if _, err := b.b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: update.Message.Chat.ID,
+					Text:   b.messages.FailedPayment[language(update.Message.From)],
+				}); err != nil {
+					log.Println(err)
+				}
+			}
+		case strings.HasPrefix(update.Message.Text, "/"):
 			if err := b.processCommand(ctx, update); err != nil {
 				log.Println(err)
 			}
-		} else {
+		default:
 			if err := b.processMessage(ctx, update); err != nil {
 				log.Println(err)
 			}
 		}
 	}
+}
+
+func (b *Bot) sendInvoice(ctx context.Context, update *models.Update, title, desc string) error {
+	_, err := b.b.SendInvoice(ctx, &tgbotapi.SendInvoiceParams{
+		ChatID:      update.Message.Chat.ID,
+		Title:       title,
+		Description: desc,
+		Currency:    "XTR",
+		Payload:     "premium",
+		Prices: []models.LabeledPrice{
+			{
+				Label:  b.messages.Premium[language(update.Message.From)],
+				Amount: premiumPrice,
+			},
+		},
+	})
+	return err
+}
+func (b *Bot) processPreCheckoutQuery(ctx context.Context, update *models.Update) error {
+	_, err := b.b.AnswerPreCheckoutQuery(ctx, &bot.AnswerPreCheckoutQueryParams{
+		PreCheckoutQueryID: update.PreCheckoutQuery.ID,
+		OK:                 true,
+		ErrorMessage:       "",
+	})
+	return err
+}
+
+func (b *Bot) processSuccessfulPayment(ctx context.Context, update *models.Update) error {
+	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
+	if err != nil {
+		return err
+	}
+	from := max(user.PremiumUntil, time.Now().Unix())
+	if err := b.store.UpdateUserPremium(ctx, update.Message.Chat.ID, time.Unix(from, 0).Add(time.Hour*24*30).Unix()); err != nil {
+		return err
+	}
+	_, err = b.b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   b.messages.SuccessfulPayment[language(update.Message.From)],
+	})
+	return err
 }
 
 // Returns user's language code if its russian or english, else returns english
