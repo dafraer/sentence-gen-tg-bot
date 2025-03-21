@@ -223,11 +223,6 @@ func premium(user *db.User) bool {
 	return !time.Unix(user.PremiumUntil, 0).Before(time.Now())
 }
 
-// canGenerate returns true if non-premium user can generate new sentences
-func canGenerate(user *db.User) bool {
-	return user.FreeSentences > 0 || time.Unix(user.LastUsed, 0).Before(time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Local))
-}
-
 // parseSentences parses gemini response into 2 sentences, returns error if fails
 func parseSentences(resp string) (string, string, error) {
 	//First sentence is in target language second is in user's language

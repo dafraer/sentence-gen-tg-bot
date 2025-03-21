@@ -52,8 +52,13 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 		return err
 	}
 
+	//Add 50 free sentences if user has not used the bot today
+	if user.FreeSentences <= 0 && time.Unix(user.LastUsed, 0).Before(time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Local)) {
+		user.FreeSentences = 50
+	}
+
 	//Check if user can generate sentences
-	if !premium(user) && !canGenerate(user) {
+	if !premium(user) && user.FreeSentences <= 0 {
 		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID:      update.Message.Chat.ID,
 			Text:        b.messages.LimitReached[language(update.Message.From)],

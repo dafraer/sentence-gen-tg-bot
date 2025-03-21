@@ -123,13 +123,13 @@ You now have unlimited access for 30 days. Thank you for your support! Wishing y
 		"en": "⚙️Set your preferences using /preferences command first! The bot won’t work until you do.",
 	}
 	msgs.AlreadyPremium = map[string]string{
-		"en": `
+		"ru": `
 🎉 Вы уже Premium пользователь! 🎉  
 У вас осталось %d дней доступа к Premium. Спасибо за поддержку! 💙  
 Наслаждайтесь неограниченной генерацией предложений!`,
-		"ru": `
+		"en": `
 🎉 You're already a Premium user! 🎉
-You currently have %d days of Premium access left. Thank you for supporting us! 💙  
+You currently have %d days of Premium access left. Thank you for supporting the bot! 💙  
 Enjoy your unlimited sentence generation!`,
 	}
 	msgs.PremiumDescription = map[string]string{
