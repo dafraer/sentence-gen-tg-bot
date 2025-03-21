@@ -19,7 +19,7 @@ type User struct {
 	SentenceLanguage string //Language in which sentence should be generated
 	Level            string //e.g. A1
 	PremiumUntil     int64  //unix time
-	State            int
+	PreferencesSet   bool
 	LastUsed         int64 //unix time
 	FreeSentences    int   //how many more free sentences can user generate
 }
@@ -49,17 +49,18 @@ func (store *Store) GetUser(ctx context.Context, chatId int64) (*User, error) {
 		SentenceLanguage: data["SentenceLanguage"].(string),
 		Level:            data["Level"].(string),
 		PremiumUntil:     data["PremiumUntil"].(int64),
-		State:            int(data["State"].(int64)),
+		PreferencesSet:   data["PreferencesSet"].(bool),
 		LastUsed:         data["LastUsed"].(int64),
 		FreeSentences:    int(data["FreeSentences"].(int64)),
 	}, nil
 }
 
-func (store *Store) UpdateUserState(ctx context.Context, chatId int64, state int) error {
+// SetUserSentenceLanguage updates user's language of generated sentences
+func (store *Store) SetUserSentenceLanguage(ctx context.Context, chatId int64, sentenceLanguage string) error {
 	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Update(ctx, []firestore.Update{
 		{
-			Path:  "State",
-			Value: state,
+			Path:  "SentenceLanguage",
+			Value: sentenceLanguage,
 		},
 	})
 	if err != nil {
@@ -68,6 +69,7 @@ func (store *Store) UpdateUserState(ctx context.Context, chatId int64, state int
 	return nil
 }
 
+// UpdateUserPremium updates user premiumUntil field to a new time stamp provided in unix time format
 func (store *Store) UpdateUserPremium(ctx context.Context, chatId int64, premiumUntil int64) error {
 	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Update(ctx, []firestore.Update{
 		{
@@ -81,20 +83,21 @@ func (store *Store) UpdateUserPremium(ctx context.Context, chatId int64, premium
 	return nil
 }
 
-func (store *Store) UpdateUserLevel(ctx context.Context, chatId int64, level string) error {
+// SetUserLevel sets language level (e.g. A1, B2) for sentences that user will generate
+// Also sets preferencesSet field to true because setting language is the last step of preferences
+func (store *Store) SetUserLevel(ctx context.Context, chatId int64, level string) error {
 	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Update(ctx, []firestore.Update{
 		{
 			Path:  "Level",
 			Value: level,
+		},
+		{
+			Path:  "PreferencesSet",
+			Value: true,
 		},
 	})
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (store *Store) DeleteUser(ctx context.Context, chatId int64) error {
-	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Delete(ctx)
-	return err
 }

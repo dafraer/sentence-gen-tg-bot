@@ -10,9 +10,18 @@ import (
 )
 
 const (
-	geminiModel     = "gemini-1.5-flash"
-	requestStringEn = "Give me a simple %s level sentence in %s with the word %s. Don't explain me anything just give me the sentence and translation to english seperated by ; symbol"
-	requestStringRu = "Дай мне простое предложение уровня %s на %s с словом %s. Не объясняй мне ничего, просто дай предложение и перевод на русский через символ ; "
+	requestStringEn = `
+Generate a simple %s-level sentence in %s using the word %s.  
+- The sentence should make it easy to understand the word from context.  
+- If the word doesn't exist or if it is from another language, return only "Error"
+- Otherwise, return the sentence and its English translation, separated by ";".  
+- Do not include any explanations or extra text."`
+	requestStringRu = `
+Сгенерируй простое предложение уровня %s на %s с использованием слова %s.
+- Предложение должно помогать понять слово из контекста.
+- Если слово не существует или оно из другого языка, верни только "Ошибка".
+- В остальных случаях верни предложение и его перевод на русский, разделяя их ;.
+- Не добавляй никаких объяснений или лишнего текста.`
 )
 
 type Client struct {
@@ -37,9 +46,9 @@ func (c *Client) Close() error {
 }
 
 // Request sends a text-only request to the gemini-1.5-flash model
-func (c *Client) Request(ctx context.Context, request string) (string, error) {
+func (c *Client) Request(ctx context.Context, request string, geminiVersion string) (string, error) {
 	//Specify model
-	model := c.client.GenerativeModel(geminiModel)
+	model := c.client.GenerativeModel(geminiVersion)
 
 	//Generate content
 	resp, err := model.GenerateContent(ctx, genai.Text(request))

@@ -2,9 +2,11 @@ package bot
 
 import (
 	"context"
+	"fmt"
 	"github.com/dafraer/sentence-gen-tg-bot/db"
 	tgbotapi "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"time"
 )
 
 func (b *Bot) processCommand(ctx context.Context, update *models.Update) error {
@@ -64,7 +66,22 @@ func (b *Bot) processHelpCommand(ctx context.Context, update *models.Update) err
 }
 
 func (b *Bot) processPremiumCommand(ctx context.Context, update *models.Update) error {
-	return b.sendInvoice(ctx, update, b.messages.PremiumTitle[language(update.Message.From)], b.messages.Premium[language(update.Message.From)])
+	//Get user to check if they already have premium
+	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
+	if err != nil {
+		return err
+	}
+	if premium(user) {
+		daysLeft := (int(time.Unix(user.PremiumUntil, 0).Sub(time.Now()).Hours()) + 23) / 24
+		_, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(b.messages.AlreadyPremium[language(update.Message.From)], daysLeft)})
+		return err
+	}
+	_, err = b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		ChatID:      update.Message.Chat.ID,
+		Text:        b.messages.Premium[language(update.Message.From)],
+		ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{{{Text: b.messages.PremiumTitle[language(update.Message.From)], CallbackData: premiumCallback}}}},
+	})
+	return err
 }
 
 func (b *Bot) processUnknownCommand(ctx context.Context, update *models.Update) error {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/dafraer/sentence-gen-tg-bot/gemini"
@@ -14,61 +13,86 @@ import (
 )
 
 func (b *Bot) processMessage(ctx context.Context, update *models.Update) error {
-	//Check if message is of appropriate size
+	//Check if message is of appropriate length
 	if len(update.Message.Text) > maxMessageLen {
 		if err := b.processMessageTooLong(ctx, update); err != nil {
 			return err
 		}
 	}
+
+	//Get user from the database to check if their preferences are set
 	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
 		return err
 	}
-	switch user.State {
-	case waitingForWord:
+
+	if user.PreferencesSet {
 		if err := b.processWord(ctx, update); err != nil {
 			return err
 		}
-	default:
-		if err := b.processUnknownCommand(ctx, update); err != nil {
-			return err
-		}
+		return nil
+	}
+
+	//If user hasn't chosen their preferences yet prompt them to do that
+	if err := b.processPreferencesNotSet(ctx, update); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
+	//Check if message text is empty
+	if update.Message.Text == "" {
+		return nil
+	}
+
+	//Get user from the database
 	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
 		return err
 	}
 
 	//Check if user can generate sentences
-	if user.FreeSentences <= 0 && time.Unix(user.PremiumUntil, 0).Before(time.Now()) && time.Unix(user.LastUsed, 0).After(time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)) {
-		if err := b.sendInvoice(ctx, update, b.messages.PremiumTitle[language(update.Message.From)], b.messages.LimitReached[language(update.Message.From)]); err != nil {
+	if !premium(user) && !canGenerate(user) {
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{
+			ChatID:      update.Message.Chat.ID,
+			Text:        b.messages.LimitReached[language(update.Message.From)],
+			ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{{{Text: b.messages.PremiumTitle[language(update.Message.From)], CallbackData: premiumCallback}}}}}); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	res, err := b.geminiClient.Request(ctx, gemini.FormatRequestString(user.Level, user.SentenceLanguage, update.Message.Text, update.Message.From.LanguageCode))
+	//Use better model if the user has premium
+	geminiVersion := geminiFlash
+	if premium(user) {
+		geminiVersion = geminiPro
+	}
+
+	//Request sentences from gemini
+	res, err := b.geminiClient.Request(ctx, gemini.FormatRequestString(user.Level, user.SentenceLanguage, update.Message.Text, update.Message.From.LanguageCode), geminiVersion)
 	if err != nil {
 		return err
 	}
-	//First sentence is in target language second is in user's language
-	sentences := strings.Split(res, ";")
-	//Check if the sentences were not generated
-	//TODO: fix this shit
-	if len(sentences) < 2 {
+	b.logger.Debugw("Response from gemini:", "response", res)
+	//Parse gemini response into 2 sentences
+	sentence1, sentence2, err := parseSentences(res)
+	if err != nil {
 		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.BadRequest[language(update.Message.From)]}); err != nil {
+			b.logger.Errorw("error sending bad request", "error", err)
 			return err
 		}
+		return nil
 	}
-	audio, err := b.tts.Generate(ctx, sentences[0], user.SentenceLanguage)
+
+	//Generate mp3 audio
+	audio, err := b.tts.Generate(ctx, sentence1, user.SentenceLanguage)
 	if err != nil {
+		b.logger.Errorw("error generating audio", "error", err)
 		return err
 	}
-	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(b.messages.ResponseMsg[language(update.Message.From)], sentences[0], sentences[1]), ParseMode: models.ParseModeMarkdown}); err != nil {
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(b.messages.ResponseMsg[language(update.Message.From)], sentence1, sentence2), ParseMode: models.ParseModeMarkdown}); err != nil {
+		b.logger.Errorw("error sending message", "error", err)
 		return err
 	}
 
@@ -77,7 +101,6 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 		ChatID:   update.Message.Chat.ID,
 		Document: &models.InputFileUpload{Filename: "audio.mp3", Data: bytes.NewReader(audio.AudioContent)},
 	}
-
 	if _, err := b.b.SendDocument(ctx, params); err != nil {
 		return err
 	}
@@ -95,6 +118,13 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 
 func (b *Bot) processMessageTooLong(ctx context.Context, update *models.Update) error {
 	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.TooLong[language(update.Message.From)]}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Bot) processPreferencesNotSet(ctx context.Context, update *models.Update) error {
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.PreferencesNotSet[language(update.Message.From)]}); err != nil {
 		return err
 	}
 	return nil
