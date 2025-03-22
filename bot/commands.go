@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// processCommand routes command to the method that handles it
 func (b *Bot) processCommand(ctx context.Context, update *models.Update) error {
 	switch update.Message.Text {
 	case "/start":
@@ -35,25 +36,26 @@ func (b *Bot) processCommand(ctx context.Context, update *models.Update) error {
 	return nil
 }
 
+// processStartCommand creates user in the database if user does not exist and sends starting message to the user
 func (b *Bot) processStartCommand(ctx context.Context, update *models.Update) error {
-	if err := b.store.SaveUser(ctx, &db.User{ChatId: update.Message.Chat.ID, UserName: update.Message.From.Username, FreeSentences: freeSentencesAmount}); err != nil {
-		return err
+	//Create user document if it does not exist
+	if _, err := b.store.GetUser(ctx, update.Message.Chat.ID); err != nil {
+		if err := b.store.CreateUser(ctx, &db.User{ChatId: update.Message.Chat.ID, UserName: update.Message.From.Username, FreeSentences: freeSentencesAmount}); err != nil {
+			return err
+		}
 	}
+
+	//Send starting message
 	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.Start[language(update.Message.From)]}); err != nil {
 		return err
 	}
 	return nil
 }
 
+// processPreferencesCommand sends settings message to the user
 func (b *Bot) processPreferencesCommand(ctx context.Context, update *models.Update) error {
-	if language(update.Message.From) == russian {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangRu, ReplyMarkup: languageMarkupRu()}); err != nil {
-			return err
-		}
-	} else {
-		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: chooseLangEn, ReplyMarkup: languageMarkupEn()}); err != nil {
-			return err
-		}
+	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.Lang[language(update.Message.From)], ReplyMarkup: b.messages.LanguageMarkup[language(update.Message.From)]}); err != nil {
+		return err
 	}
 	return nil
 }

@@ -32,8 +32,13 @@ func New(ctx context.Context) (*Store, error) {
 	return &Store{client}, nil
 }
 
-func (store *Store) SaveUser(ctx context.Context, user *User) error {
-	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(user.ChatId))).Set(ctx, user)
+func (store *Store) CreateUser(ctx context.Context, user *User) error {
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(user.ChatId))).Create(ctx, user)
+	return err
+}
+
+func (store *Store) UpdateUser(ctx context.Context, user *User) error {
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(user.ChatId))).Set(ctx, user, firestore.MergeAll)
 	return err
 }
 

@@ -1,5 +1,7 @@
 package text
 
+import "github.com/go-telegram/bot/models"
+
 type Messages struct {
 	Start              map[string]string //Sent on /start command
 	Help               map[string]string //Sent on /help command
@@ -18,6 +20,7 @@ type Messages struct {
 	PreferencesNotSet  map[string]string //Sent when user tries to generate sentences without setting the preferences
 	AlreadyPremium     map[string]string //Sent when premium user tries to buy premium
 	PremiumDescription map[string]string //Sent in the description of the invoice
+	LanguageMarkup     map[string]*models.InlineKeyboardMarkup
 }
 
 // Load returns a Message object with all the message in russian and english
@@ -135,6 +138,58 @@ Enjoy your unlimited sentence generation!`,
 	msgs.PremiumDescription = map[string]string{
 		"ru": "Откройте неограниченную генерацию предложений и доступ к улучшенной ИИ модели.",
 		"en": "Unlock unlimited sentence generation and access a better AI model",
+	}
+	msgs.LanguageMarkup = map[string]*models.InlineKeyboardMarkup{
+		"ru": &models.InlineKeyboardMarkup{
+			InlineKeyboard: [][]models.InlineKeyboardButton{
+				{
+					{Text: "Английский", CallbackData: "en-US"},
+				}, {
+					{Text: "Испанский", CallbackData: "es-ES"},
+				}, {
+					{Text: "Французский", CallbackData: "fr-FR"},
+				}, {
+					{Text: "Немецкий", CallbackData: "de-DE"},
+				}, {
+					{Text: "Турецкий", CallbackData: "tr-TR"},
+				}, {
+					{Text: "Греческий", CallbackData: "el-GR"},
+				}, {
+					{Text: "Японский", CallbackData: "ja-JP"},
+				}, {
+					{Text: "Корейский", CallbackData: "ko-KR"},
+				}, {
+					{Text: "Арабский", CallbackData: "ar-XA"},
+				}, {
+					{Text: "Итальянский", CallbackData: "it-IT"},
+				},
+			},
+		},
+		"en": &models.InlineKeyboardMarkup{
+			InlineKeyboard: [][]models.InlineKeyboardButton{
+				{
+					{Text: "Spanish", CallbackData: "es-ES"},
+				}, {
+					{Text: "French", CallbackData: "fr-FR"},
+				}, {
+					{Text: "German", CallbackData: "de-DE"},
+				}, {
+					{Text: "Turkish", CallbackData: "tr-TR"},
+				}, {
+					{Text: "Greek", CallbackData: "el-GR"},
+				}, {
+					{Text: "Russian", CallbackData: "ru-RU"},
+				}, {
+					{Text: "Japanese", CallbackData: "ja-JP"},
+				}, {
+					{Text: "Korean", CallbackData: "ko-KR"},
+				}, {
+					{Text: "Arabic", CallbackData: "ar-XA"},
+				}, {
+					{Text: "Italian", CallbackData: "it-IT"},
+				},
+			},
+		},
 	}
 	return &msgs
 }

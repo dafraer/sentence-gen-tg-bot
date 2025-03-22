@@ -115,7 +115,7 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 	if time.Unix(user.PremiumUntil, 0).Before(time.Now()) {
 		user.FreeSentences--
 	}
-	if err := b.store.SaveUser(ctx, user); err != nil {
+	if err := b.store.UpdateUser(ctx, user); err != nil {
 		return err
 	}
 	return nil

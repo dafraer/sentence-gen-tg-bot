@@ -39,7 +39,10 @@ type Bot struct {
 
 // New creates a new bot
 func New(token string, store *db.Store, geminiClient *gemini.Client, ttsClient *tts.Client, messages *text.Messages, logger *zap.SugaredLogger) (*Bot, error) {
+	//Create bot using provided dependencies
 	bot := &Bot{store: store, geminiClient: geminiClient, tts: ttsClient, messages: messages, logger: logger}
+
+	//Create telegram bot with a default handler
 	b, err := tgbotapi.New(token, tgbotapi.WithDefaultHandler(bot.defaultHandler))
 	if err != nil {
 		return nil, err
@@ -48,6 +51,7 @@ func New(token string, store *db.Store, geminiClient *gemini.Client, ttsClient *
 	return bot, nil
 }
 
+// Run runs the bot
 func (b *Bot) Run(ctx context.Context) {
 	b.b.Start(ctx)
 }
@@ -89,12 +93,13 @@ func (b *Bot) defaultHandler(ctx context.Context, _ *bot.Bot, update *models.Upd
 	}
 }
 
+// sendInvoice sends invoice for premium subscription to the user
 func (b *Bot) sendInvoice(ctx context.Context, user *models.User, title, desc string) error {
 	_, err := b.b.SendInvoice(ctx, &tgbotapi.SendInvoiceParams{
 		ChatID:      user.ID,
 		Title:       title,
 		Description: desc,
-		Currency:    "XTR",
+		Currency:    "XTR", // Telegram stars
 		Payload:     "premium",
 		Prices: []models.LabeledPrice{
 			{
@@ -105,6 +110,8 @@ func (b *Bot) sendInvoice(ctx context.Context, user *models.User, title, desc st
 	})
 	return err
 }
+
+// processPreCheckoutQuery process pre checkout query that is sent to us to confirm payment
 func (b *Bot) processPreCheckoutQuery(ctx context.Context, update *models.Update) error {
 	_, err := b.b.AnswerPreCheckoutQuery(ctx, &bot.AnswerPreCheckoutQueryParams{
 		PreCheckoutQueryID: update.PreCheckoutQuery.ID,
@@ -114,15 +121,23 @@ func (b *Bot) processPreCheckoutQuery(ctx context.Context, update *models.Update
 	return err
 }
 
+// processSuccessfulPayment gives user premium and sends them a message saying that payment has been successful
 func (b *Bot) processSuccessfulPayment(ctx context.Context, update *models.Update) error {
+	//Get user from the database
 	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
 		return err
 	}
+
+	//from is a time from which we start the 30 days premium period. It is set to the last day of user's premium if they still have it
 	from := max(user.PremiumUntil, time.Now().Unix())
+
+	//Add 30 days to user's premium
 	if err := b.store.UpdateUserPremium(ctx, update.Message.Chat.ID, time.Unix(from, 0).Add(time.Hour*24*30).Unix()); err != nil {
 		return err
 	}
+
+	//Send message to the user saying that payment has been successful
 	_, err = b.b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   b.messages.SuccessfulPayment[language(update.Message.From)],
@@ -156,63 +171,6 @@ func levelsMarkup() *models.InlineKeyboardMarkup {
 				{Text: "C1", CallbackData: "C1"},
 			}, {
 				{Text: "C2", CallbackData: "C2"},
-			},
-		},
-	}
-}
-
-// languageMarkupEn returns inline keyboard markup for selecting language in english
-func languageMarkupEn() *models.InlineKeyboardMarkup {
-	return &models.InlineKeyboardMarkup{
-		InlineKeyboard: [][]models.InlineKeyboardButton{
-			{
-				{Text: "Spanish", CallbackData: "es-ES"},
-			}, {
-				{Text: "French", CallbackData: "fr-FR"},
-			}, {
-				{Text: "German", CallbackData: "de-DE"},
-			}, {
-				{Text: "Turkish", CallbackData: "tr-TR"},
-			}, {
-				{Text: "Greek", CallbackData: "el-GR"},
-			}, {
-				{Text: "Russian", CallbackData: "ru-RU"},
-			}, {
-				{Text: "Japanese", CallbackData: "ja-JP"},
-			}, {
-				{Text: "Korean", CallbackData: "ko-KR"},
-			}, {
-				{Text: "Arabic", CallbackData: "ar-XA"},
-			}, {
-				{Text: "Italian", CallbackData: "it-IT"},
-			},
-		},
-	}
-}
-
-func languageMarkupRu() *models.InlineKeyboardMarkup {
-	return &models.InlineKeyboardMarkup{
-		InlineKeyboard: [][]models.InlineKeyboardButton{
-			{
-				{Text: "Английский", CallbackData: "en-US"},
-			}, {
-				{Text: "Испанский", CallbackData: "es-ES"},
-			}, {
-				{Text: "Французский", CallbackData: "fr-FR"},
-			}, {
-				{Text: "Немецкий", CallbackData: "de-DE"},
-			}, {
-				{Text: "Турецкий", CallbackData: "tr-TR"},
-			}, {
-				{Text: "Греческий", CallbackData: "el-GR"},
-			}, {
-				{Text: "Японский", CallbackData: "ja-JP"},
-			}, {
-				{Text: "Корейский", CallbackData: "ko-KR"},
-			}, {
-				{Text: "Арабский", CallbackData: "ar-XA"},
-			}, {
-				{Text: "Итальянский", CallbackData: "it-IT"},
 			},
 		},
 	}
