@@ -3,24 +3,24 @@ package text
 import "github.com/go-telegram/bot/models"
 
 type Messages struct {
-	Start              map[string]string //Sent on /start command
-	Help               map[string]string //Sent on /help command
-	Lang               map[string]string //Sent when prompting user to choose the language
-	Level              map[string]string //Sent when prompting user to choose language level (e.g. A1)
-	PreferencesSet     map[string]string //Sent after user finishes set up
-	UnknownCommand     map[string]string //Sent when receiving unknown command
-	ResponseMsg        map[string]string //Sent when sending generated sentences to the user
-	TooLong            map[string]string //Sent when message exceeds maxMessageLen set in bot.go
-	BadRequest         map[string]string //Sent when unable to make sentences due to word being inappropriate or not existing
-	Premium            map[string]string //Sent when user uses /premium command if they don't have premium yet
-	LimitReached       map[string]string //Sent when user reaches free limit of 50 sentences per day
-	PremiumTitle       map[string]string //Title of the message with the invoice and text of premium inline
-	SuccessfulPayment  map[string]string //Sent when payment is successful
-	FailedPayment      map[string]string //Sent when payment has failed
-	PreferencesNotSet  map[string]string //Sent when user tries to generate sentences without setting the preferences
-	AlreadyPremium     map[string]string //Sent when premium user tries to buy premium
-	PremiumDescription map[string]string //Sent in the description of the invoice
-	LanguageMarkup     map[string]*models.InlineKeyboardMarkup
+	Start              map[string]string                       //Sent on /start command
+	Help               map[string]string                       //Sent on /help command
+	Lang               map[string]string                       //Sent when prompting user to choose the language
+	Level              map[string]string                       //Sent when prompting user to choose language level (e.g. A1)
+	PreferencesSet     map[string]string                       //Sent after user finishes set up
+	UnknownCommand     map[string]string                       //Sent when receiving unknown command
+	ResponseMsg        map[string]string                       //Sent when sending generated sentences to the user
+	TooLong            map[string]string                       //Sent when message exceeds maxMessageLen set in bot.go
+	BadRequest         map[string]string                       //Sent when unable to make sentences due to word being inappropriate or not existing
+	Premium            map[string]string                       //Sent when user uses /premium command if they don't have premium yet
+	LimitReached       map[string]string                       //Sent when user reaches free limit of 50 sentences per day
+	PremiumTitle       map[string]string                       //Title of the message with the invoice and text of premium inline
+	SuccessfulPayment  map[string]string                       //Sent when payment is successful
+	FailedPayment      map[string]string                       //Sent when payment has failed
+	PreferencesNotSet  map[string]string                       //Sent when user tries to generate sentences without setting the preferences
+	AlreadyPremium     map[string]string                       //Sent when premium user tries to buy premium
+	PremiumDescription map[string]string                       //Sent in the description of the invoice
+	LanguageMarkup     map[string]*models.InlineKeyboardMarkup //Contains markup for inline keyboards with language
 }
 
 // Load returns a Message object with all the message in russian and english
@@ -74,8 +74,8 @@ Now you can send the words for which you’d like to generate sentences. Just ty
 	}
 	msgs.ResponseMsg = map[string]string{
 		//Response messages need escaping \ because they are parsed using telegram's Mark Down Parse mode
-		"ru": "⚠️ Обратите внимание, что ИИ может иногда допускать ошибки\\.\nВот ваше предложение и перевод на русский:\n``` %s```\n``` %s```",
-		"en": "⚠️ Please note that AI may occasionally make mistakes\\.\nHere is your sentence and english translation:\n``` %s```\n``` %s```",
+		"ru": "⚠️ Обратите внимание, что ИИ может иногда допускать неточности и ошибки\\.\nВот ваше предложение и перевод на русский:\n``` %s```\n``` %s```",
+		"en": "⚠️ Please note that AI may occasionally make inaccuracies and mistakes\\.\nHere is your sentence and english translation:\n``` %s```\n``` %s```",
 	}
 	msgs.TooLong = map[string]string{
 		"ru": "Sorry, your word is too long",
@@ -87,11 +87,11 @@ Now you can send the words for which you’d like to generate sentences. Just ty
 	}
 	msgs.Premium = map[string]string{
 		"ru": `
-💎 Оформите Premium на 30 дней с неограниченным доступом! 💎
+Оформите Premium на 30 дней с неограниченным доступом!
 Генерируйте неограниченное количество предложений и используйте более продвинутую модель ИИ! 🚀 Premium поддерживает разработчика и покрывает расходы на API. 💙
 Оформите подписку сейчас и улучшите процесс обучения! ✨`,
 		"en": `
-💎 Go Premium for 30 Days of Unlimited Access! 💎
+Go Premium for 30 Days of Unlimited Access!
 Generate unlimited sentences, and enjoy a more advanced AI model! 🚀 Premium supports the creator and covers API costs. 💙
 Upgrade now and enhance your learning experience! ✨`,
 	}

@@ -11,6 +11,7 @@ type Client struct {
 	tts *texttospeech.Client
 }
 
+// New creates new tts client
 func New(ctx context.Context) (*Client, error) {
 	client, err := texttospeech.NewClient(ctx)
 	if err != nil {
@@ -19,6 +20,7 @@ func New(ctx context.Context) (*Client, error) {
 	return &Client{client}, nil
 }
 
+// Close closes tts client
 func (c *Client) Close() error {
 	if err := c.tts.Close(); err != nil {
 		return err
@@ -26,16 +28,15 @@ func (c *Client) Close() error {
 	return nil
 }
 
+// Generate generates mp3 audio based on the text and language provided
 func (c *Client) Generate(ctx context.Context, text string, languageCode string) (*texttospeechpb.SynthesizeSpeechResponse, error) {
-	// Perform the text-to-speech request on the text input with the selected
-	// voice parameters and audio file type.
+	// Perform the text-to-speech request on the text input with the selected voice parameters and audio file type.
 	req := texttospeechpb.SynthesizeSpeechRequest{
 		// Set the text input to be synthesized.
 		Input: &texttospeechpb.SynthesisInput{
 			InputSource: &texttospeechpb.SynthesisInput_Text{Text: text},
 		},
-		// Build the voice request, select the language code ("en-US") and the SSML
-		// voice gender ("neutral").
+		// Build the voice request, select the language code (e.g. "en-US") and the SSML voice gender ("neutral").
 		Voice: &texttospeechpb.VoiceSelectionParams{
 			LanguageCode: languageCode,
 			SsmlGender:   texttospeechpb.SsmlVoiceGender_NEUTRAL,
@@ -46,6 +47,7 @@ func (c *Client) Generate(ctx context.Context, text string, languageCode string)
 		},
 	}
 
+	//Generate speech
 	resp, err := c.tts.SynthesizeSpeech(ctx, &req)
 	if err != nil {
 		log.Fatal(err)

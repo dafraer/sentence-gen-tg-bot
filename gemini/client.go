@@ -17,11 +17,11 @@ Generate a simple %s-level sentence in %s using the word %s.
 - Otherwise, return the sentence and its English translation, separated by ";".  
 - Do not include any explanations or extra text."`
 	requestStringRu = `
-Сгенерируй простое предложение уровня %s на %s с использованием слова %s.
-- Предложение должно помогать понять слово из контекста.
-- Если слово не существует или оно из другого языка, верни только "Ошибка".
-- В остальных случаях верни предложение и его перевод на русский, разделяя их ;.
-- Не добавляй никаких объяснений или лишнего текста.`
+Generate a simple %s-level sentence in %s using the word %s.  
+- The sentence should make it easy to understand the word from context.  
+- If the word doesn't exist or if it is from another language, return only "Error"
+- Otherwise, return the sentence and its Russian translation, separated by ";".  
+- Do not include any explanations or extra text."`
 )
 
 type Client struct {
@@ -45,7 +45,7 @@ func (c *Client) Close() error {
 	return nil
 }
 
-// Request sends a text-only request to the gemini-1.5-flash model
+// Request sends a text-only request to the gemini model specified in geminiVersion parameter
 func (c *Client) Request(ctx context.Context, request string, geminiVersion string) (string, error) {
 	//Specify model
 	model := c.client.GenerativeModel(geminiVersion)
@@ -69,6 +69,7 @@ func (c *Client) Request(ctx context.Context, request string, geminiVersion stri
 	return response.String(), nil
 }
 
+// FormatRequestString formats request string based on the language
 func FormatRequestString(level, sentenceLanguage, word, language string) string {
 	if language == "ru" {
 		return fmt.Sprintf(requestStringRu, level, sentenceLanguage, word)

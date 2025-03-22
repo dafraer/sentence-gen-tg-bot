@@ -12,44 +12,45 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func (b *Bot) processMessage(ctx context.Context, update *models.Update) error {
+// processMessage routes message to the handler functions
+func (b *Bot) processMessage(ctx context.Context, update *models.Update) {
+	b.logger.Infow("Message Received", "from", update.Message.From.Username, "message", update.Message.Text)
+
 	//Check if message is of appropriate length
 	if len(update.Message.Text) > maxMessageLen {
-		if err := b.processMessageTooLong(ctx, update); err != nil {
-			return err
-		}
+		b.processMessageTooLong(ctx, update)
+		return
 	}
 
 	//Get user from the database to check if their preferences are set
 	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
-		return err
+		b.logger.Errorw("error getting user from the database", "error", err)
+		return
 	}
 
+	//If user has set their preferences, process the word
 	if user.PreferencesSet {
-		if err := b.processWord(ctx, update); err != nil {
-			return err
-		}
-		return nil
+		b.processWord(ctx, update)
+		return
 	}
 
 	//If user hasn't chosen their preferences yet prompt them to do that
-	if err := b.processPreferencesNotSet(ctx, update); err != nil {
-		return err
-	}
-	return nil
+	b.processPreferencesNotSet(ctx, update)
 }
 
-func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
+// processWord generates two sentences and audio for the provided word
+func (b *Bot) processWord(ctx context.Context, update *models.Update) {
 	//Check if message text is empty
 	if update.Message.Text == "" {
-		return nil
+		return
 	}
 
 	//Get user from the database
 	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
-		return err
+		b.logger.Errorw("error getting user from the db", "error", err)
+		return
 	}
 
 	//Add 50 free sentences if user has not used the bot today
@@ -59,13 +60,14 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 
 	//Check if user can generate sentences
 	if !premium(user) && user.FreeSentences <= 0 {
+		//If they can't send them message notifying them that free sentence limit has been reached
 		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID:      update.Message.Chat.ID,
 			Text:        b.messages.LimitReached[language(update.Message.From)],
 			ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{{{Text: b.messages.PremiumTitle[language(update.Message.From)], CallbackData: premiumCallback}}}}}); err != nil {
-			return err
+			b.logger.Errorw("error sending message", "error", err)
 		}
-		return nil
+		return
 	}
 
 	//Use better model if the user has premium
@@ -77,28 +79,31 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 	//Request sentences from gemini
 	res, err := b.geminiClient.Request(ctx, gemini.FormatRequestString(user.Level, user.SentenceLanguage, update.Message.Text, update.Message.From.LanguageCode), geminiVersion)
 	if err != nil {
-		return err
+		b.logger.Errorw("error getting response from gemini", "error", err)
+		return
 	}
 	b.logger.Debugw("Response from gemini:", "response", res)
+
 	//Parse gemini response into 2 sentences
 	sentence1, sentence2, err := parseSentences(res)
 	if err != nil {
 		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.BadRequest[language(update.Message.From)]}); err != nil {
-			b.logger.Errorw("error sending bad request", "error", err)
-			return err
+			b.logger.Errorw("error sending message", "error", err)
 		}
-		return nil
+		return
 	}
 
 	//Generate mp3 audio
 	audio, err := b.tts.Generate(ctx, sentence1, user.SentenceLanguage)
 	if err != nil {
 		b.logger.Errorw("error generating audio", "error", err)
-		return err
+		return
 	}
+
+	//Send sentences
 	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(b.messages.ResponseMsg[language(update.Message.From)], sentence1, sentence2), ParseMode: models.ParseModeMarkdown}); err != nil {
 		b.logger.Errorw("error sending message", "error", err)
-		return err
+		return
 	}
 
 	//Send audio
@@ -107,30 +112,30 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) error {
 		Document: &models.InputFileUpload{Filename: "audio.mp3", Data: bytes.NewReader(audio.AudioContent)},
 	}
 	if _, err := b.b.SendDocument(ctx, params); err != nil {
-		return err
+		b.logger.Errorw("error sending document", "error", err)
+		return
 	}
 
-	//Update user
+	//Update user data
 	user.LastUsed = time.Now().Unix()
-	if time.Unix(user.PremiumUntil, 0).Before(time.Now()) {
+	if !premium(user) {
 		user.FreeSentences--
 	}
 	if err := b.store.UpdateUser(ctx, user); err != nil {
-		return err
+		b.logger.Errorw("error updating user", "error", err)
 	}
-	return nil
 }
 
-func (b *Bot) processMessageTooLong(ctx context.Context, update *models.Update) error {
+// processMessageTooLong notifies user that their message is too long
+func (b *Bot) processMessageTooLong(ctx context.Context, update *models.Update) {
 	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.TooLong[language(update.Message.From)]}); err != nil {
-		return err
+		b.logger.Errorw("error sending message", "error", err)
 	}
-	return nil
 }
 
-func (b *Bot) processPreferencesNotSet(ctx context.Context, update *models.Update) error {
+// processPreferencesNotSet notifies user that their preferences are not set
+func (b *Bot) processPreferencesNotSet(ctx context.Context, update *models.Update) {
 	if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.PreferencesNotSet[language(update.Message.From)]}); err != nil {
-		return err
+		b.logger.Errorw("error sending message", "error", err)
 	}
-	return nil
 }

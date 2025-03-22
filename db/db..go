@@ -1,13 +1,12 @@
 package db
 
 import (
+	"cloud.google.com/go/firestore"
 	"context"
 	"strconv"
-
-	"cloud.google.com/go/firestore"
 )
 
-const projectID = "enhanced-rarity-437111-d9"
+const projectID = "enhanced-rarity-437111-d9" //Project id on Google cloud
 
 type Store struct {
 	db *firestore.Client
@@ -15,7 +14,7 @@ type Store struct {
 
 type User struct {
 	ChatId           int64
-	UserName         string
+	UserName         string //Telegram username
 	SentenceLanguage string //Language in which sentence should be generated
 	Level            string //e.g. A1
 	PremiumUntil     int64  //unix time
@@ -24,6 +23,7 @@ type User struct {
 	FreeSentences    int   //how many more free sentences can user generate
 }
 
+// New creates new firestore instance
 func New(ctx context.Context) (*Store, error) {
 	client, err := firestore.NewClient(ctx, projectID)
 	if err != nil {
@@ -32,22 +32,30 @@ func New(ctx context.Context) (*Store, error) {
 	return &Store{client}, nil
 }
 
+// CreateUser Creates user if user does not exist
 func (store *Store) CreateUser(ctx context.Context, user *User) error {
 	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(user.ChatId))).Create(ctx, user)
 	return err
 }
 
+// UpdateUser updates user overriding all fields with the provided user struct
 func (store *Store) UpdateUser(ctx context.Context, user *User) error {
-	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(user.ChatId))).Set(ctx, user, firestore.MergeAll)
+	_, err := store.db.Collection("users").Doc(strconv.Itoa(int(user.ChatId))).Set(ctx, user)
 	return err
 }
 
+// GetUser retrieves user from the database using telegram chat id
 func (store *Store) GetUser(ctx context.Context, chatId int64) (*User, error) {
+	//Make a request to the firestore
 	res, err := store.db.Collection("users").Doc(strconv.Itoa(int(chatId))).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	//Get data from the response
 	data := res.Data()
+
+	//Return data in user struct
 	return &User{
 		ChatId:           data["ChatId"].(int64),
 		UserName:         data["UserName"].(string),

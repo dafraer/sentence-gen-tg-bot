@@ -19,7 +19,7 @@ import (
 
 const (
 	premiumCallback     = "premium"
-	geminiFlash         = "gemini-1.5-flash"
+	geminiFlash         = "gemini-2.0-flash"
 	geminiPro           = "gemini-2.0-pro-exp-02-05"
 	freeSentencesAmount = 50
 	premiumPrice        = 1 //Premium subscription price in Telegram Stars
@@ -61,18 +61,15 @@ func (b *Bot) defaultHandler(ctx context.Context, _ *bot.Bot, update *models.Upd
 	//Check if the update is a preCheckoutQuery, callbackQuery or message
 	switch {
 	case update.PreCheckoutQuery != nil:
-		if err := b.processPreCheckoutQuery(ctx, update); err != nil {
-			b.logger.Errorw("error processing pre checkout query", "error", err)
-		}
+		b.processPreCheckoutQuery(ctx, update)
 	case update.CallbackQuery != nil:
-		if err := b.processCallbackQuery(ctx, update); err != nil {
-			b.logger.Errorw("error processing callback query", "error", err)
-		}
+		b.processCallbackQuery(ctx, update)
 	case update.Message != nil:
 		//Check if the message is successful payment, command or just a message
 		switch {
 		case update.Message.SuccessfulPayment != nil:
 			if err := b.processSuccessfulPayment(ctx, update); err != nil {
+				//If we can't process successful payment send user message about it
 				b.logger.Errorw("error processing successful payment", "error", err)
 				if _, err := b.b.SendMessage(ctx, &bot.SendMessageParams{
 					ChatID: update.Message.Chat.ID,
@@ -82,13 +79,9 @@ func (b *Bot) defaultHandler(ctx context.Context, _ *bot.Bot, update *models.Upd
 				}
 			}
 		case strings.HasPrefix(update.Message.Text, "/"):
-			if err := b.processCommand(ctx, update); err != nil {
-				b.logger.Errorw("error processing command", "error", err)
-			}
+			b.processCommand(ctx, update)
 		default:
-			if err := b.processMessage(ctx, update); err != nil {
-				b.logger.Errorw("error processing message", "error", err)
-			}
+			b.processMessage(ctx, update)
 		}
 	}
 }
@@ -112,13 +105,15 @@ func (b *Bot) sendInvoice(ctx context.Context, user *models.User, title, desc st
 }
 
 // processPreCheckoutQuery process pre checkout query that is sent to us to confirm payment
-func (b *Bot) processPreCheckoutQuery(ctx context.Context, update *models.Update) error {
+func (b *Bot) processPreCheckoutQuery(ctx context.Context, update *models.Update) {
 	_, err := b.b.AnswerPreCheckoutQuery(ctx, &bot.AnswerPreCheckoutQueryParams{
 		PreCheckoutQueryID: update.PreCheckoutQuery.ID,
 		OK:                 true,
 		ErrorMessage:       "",
 	})
-	return err
+	if err != nil {
+		b.logger.Errorw("error processing pre checkout query", "error", err)
+	}
 }
 
 // processSuccessfulPayment gives user premium and sends them a message saying that payment has been successful
@@ -126,6 +121,7 @@ func (b *Bot) processSuccessfulPayment(ctx context.Context, update *models.Updat
 	//Get user from the database
 	user, err := b.store.GetUser(ctx, update.Message.Chat.ID)
 	if err != nil {
+		b.logger.Errorw("error getting user from the database", "error", err)
 		return err
 	}
 
@@ -134,6 +130,7 @@ func (b *Bot) processSuccessfulPayment(ctx context.Context, update *models.Updat
 
 	//Add 30 days to user's premium
 	if err := b.store.UpdateUserPremium(ctx, update.Message.Chat.ID, time.Unix(from, 0).Add(time.Hour*24*30).Unix()); err != nil {
+		b.logger.Errorw("error updating user's premium", "error", err)
 		return err
 	}
 
@@ -142,6 +139,9 @@ func (b *Bot) processSuccessfulPayment(ctx context.Context, update *models.Updat
 		ChatID: update.Message.Chat.ID,
 		Text:   b.messages.SuccessfulPayment[language(update.Message.From)],
 	})
+	if err != nil {
+		b.logger.Errorw("error sending message", "error", err)
+	}
 	return err
 }
 
