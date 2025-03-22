@@ -13,7 +13,7 @@ const (
 
 // processCallbackQuery routes callback to the handler functions
 func (b *Bot) processCallbackQuery(ctx context.Context, update *models.Update) {
-	b.logger.Infow("Callback Query Received", "from", update.Message.From.Username, "callback data", update.CallbackQuery.Data)
+	b.logger.Infow("Callback Query Received", "from", update.CallbackQuery.From.Username, "callback data", update.CallbackQuery.Data)
 	switch {
 	//callback to buy premium
 	case update.CallbackQuery.Data == premiumCallback:

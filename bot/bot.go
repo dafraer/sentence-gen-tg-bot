@@ -22,7 +22,7 @@ const (
 	geminiFlash         = "gemini-2.0-flash"
 	geminiPro           = "gemini-2.0-pro-exp-02-05"
 	freeSentencesAmount = 50
-	premiumPrice        = 1 //Premium subscription price in Telegram Stars
+	premiumPrice        = 100 //Premium subscription price in Telegram Stars
 	english             = "en"
 	russian             = "ru"
 	maxMessageLen       = 100 //bytes
@@ -51,9 +51,14 @@ func New(token string, store *db.Store, geminiClient *gemini.Client, ttsClient *
 	return bot, nil
 }
 
-// Run runs the bot
+// Run runs the bot using long polling
 func (b *Bot) Run(ctx context.Context) {
 	b.b.Start(ctx)
+}
+
+// RunWebhook runs bot using webhook
+func (b *Bot) RunWebhook(ctx context.Context, url string) error {
+	return nil
 }
 
 // defaultHandler routes request to the bot
