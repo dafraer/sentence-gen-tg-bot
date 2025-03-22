@@ -77,6 +77,7 @@ func (b *Bot) processPremiumCommand(ctx context.Context, update *models.Update) 
 		if err != nil {
 			b.logger.Errorw("error sending message", "error", err)
 		}
+		return
 	}
 
 	//Send message with an inline keyboard prompting user to buy premium

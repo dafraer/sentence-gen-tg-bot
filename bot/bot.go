@@ -7,6 +7,7 @@ import (
 	"github.com/dafraer/sentence-gen-tg-bot/text"
 	"github.com/dafraer/sentence-gen-tg-bot/tts"
 	"go.uber.org/zap"
+	"net/http"
 	"strings"
 	"time"
 
@@ -57,7 +58,48 @@ func (b *Bot) Run(ctx context.Context) {
 }
 
 // RunWebhook runs bot using webhook
-func (b *Bot) RunWebhook(ctx context.Context, url string) error {
+func (b *Bot) RunWebhook(ctx context.Context, address string) error {
+	//delete webhook before shutdown
+	defer func() {
+		if _, err := b.b.DeleteWebhook(context.Background(), &tgbotapi.DeleteWebhookParams{DropPendingUpdates: true}); err != nil {
+			panic(err)
+		}
+	}()
+	go b.b.StartWebhook(ctx)
+
+	//Set tup server for the webhook
+	//Create http server for the webhook
+	srv := &http.Server{
+		Addr:    address,
+		Handler: b.b.WebhookHandler(),
+	}
+
+	//Create channel for errors
+	ch := make(chan error)
+
+	//Run server in a goroutine
+	go func() {
+		defer close(ch)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			ch <- err
+			return
+		}
+		ch <- nil
+	}()
+
+	//Wait for either shutdown or an error
+	select {
+	case <-ctx.Done():
+		if err := srv.Shutdown(context.Background()); err != nil {
+			return err
+		}
+		err := <-ch
+		if err != nil {
+			return err
+		}
+	case err := <-ch:
+		return err
+	}
 	return nil
 }
 
