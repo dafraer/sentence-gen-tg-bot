@@ -130,11 +130,11 @@ You now have unlimited access for 30 days. Thank you for your support! Wishing y
 	}
 	msgs.AlreadyPremium = map[string]func(int) string{
 		"ru": conjugateAlreadyPremiumMessageRu,
-		"en": func(int) string {
-			return `
+		"en": func(n int) string {
+			return fmt.Sprintf(`
 You're already a Premium user!🎉
 You currently have %d days of Premium access left. Thank you for supporting the bot! 💙  
-Enjoy your unlimited sentence generation!`
+Enjoy your unlimited sentence generation!`, n)
 		},
 	}
 	msgs.PremiumDescription = map[string]string{
