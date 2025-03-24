@@ -72,6 +72,7 @@ func (b *Bot) processPremiumCommand(ctx context.Context, update *models.Update) 
 		daysLeft := (int(time.Unix(user.PremiumUntil, 0).Sub(time.Now()).Hours()) + 23) / 24
 
 		//Tell user that they  already have premium
+		//b.logger.Debugw("language", "language", language(update.Message.From), "languageCode", update.Message.From.LanguageCode)
 		_, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: b.messages.AlreadyPremium[language(update.Message.From)](daysLeft)})
 		if err != nil {
 			b.logger.Errorw("error sending message", "error", err)
