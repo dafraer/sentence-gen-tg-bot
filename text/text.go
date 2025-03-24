@@ -1,6 +1,9 @@
 package text
 
-import "github.com/go-telegram/bot/models"
+import (
+	"fmt"
+	"github.com/go-telegram/bot/models"
+)
 
 type Messages struct {
 	Start              map[string]string                       //Sent on /start command
@@ -18,7 +21,7 @@ type Messages struct {
 	SuccessfulPayment  map[string]string                       //Sent when payment is successful
 	FailedPayment      map[string]string                       //Sent when payment has failed
 	PreferencesNotSet  map[string]string                       //Sent when user tries to generate sentences without setting the preferences
-	AlreadyPremium     map[string]string                       //Sent when premium user tries to buy premium
+	AlreadyPremium     map[string]func(int) string             //Sent when premium user tries to buy premium value is a function because of conjugation
 	PremiumDescription map[string]string                       //Sent in the description of the invoice
 	LanguageMarkup     map[string]*models.InlineKeyboardMarkup //Contains markup for inline keyboards with language
 }
@@ -43,13 +46,13 @@ Happy learning! 📚✨`,
 📌 Доступные команды:
 ✅ /preferences – Выберите язык и уровень сложности для персонализированных предложений.  
 ✅ /help – Посмотреть список команд и их описание.  
-✅ /premium – Получите неограниченную генерацию предложений и доступ к более продвинутой модели ИИ для еще лучших результатов.  
+✅ /premium – Получите неограниченную генерацию предложений.  
 Нужна помощь? Напишите мне – @dafraer`,
 		"en": `
 📌 Available Commands:
 ✅ /preferences – Set your language and difficulty level for personalized sentences.  
 ✅ /help – View this list of commands and their explanations.  
-✅ /premium – Get unlimited sentence generation and access a more advanced AI model for even better sentences.
+✅ /premium – Get unlimited sentence generation.
 Need help? Just send me a message – @dafraer`,
 	}
 	msgs.Lang = map[string]string{
@@ -87,21 +90,21 @@ Now you can send the words for which you’d like to generate sentences. Just ty
 	}
 	msgs.Premium = map[string]string{
 		"ru": `
-Оформите Premium на 30 дней с неограниченным доступом!
-Генерируйте неограниченное количество предложений и используйте более продвинутую модель ИИ! 🚀 Premium поддерживает разработчика и покрывает расходы на API. 💙
+Перейдите на Premium и получите 30 дней безлимитного доступа!
+Генерируйте неограниченное количество предложений и поддержите разработчика, покрывая расходы на API. 💙
 Оформите подписку сейчас и улучшите процесс обучения! ✨`,
 		"en": `
 Go Premium for 30 Days of Unlimited Access!
-Generate unlimited sentences, and enjoy a more advanced AI model! 🚀 Premium supports the creator and covers API costs. 💙
+Generate unlimited sentences and support the creator by covering API costs. 💙
 Upgrade now and enhance your learning experience! ✨`,
 	}
 	msgs.LimitReached = map[string]string{
 		"ru": `
-🚨 Дневной лимит исчерпан! 🚨
+🚨Дневной лимит исчерпан!🚨
 Вы использовали 50 бесплатных предложений. Хотите безлимитный доступ? 
 Оформите Premium, чтобы продолжать обучение и поддержать бота! 💙`,
 		"en": `
-🚨 Daily Limit Reached! 🚨
+🚨Daily Limit Reached!🚨
 You've used all 50 free sentences for today. Want unlimited access? 
 Upgrade to Premium to keep learning and support the bot! 💙`,
 	}
@@ -125,19 +128,18 @@ You now have unlimited access for 30 days. Thank you for your support! Wishing y
 		"ru": "⚙️Сначала настройте бота используя команду /preferences! Без этого бот не будет работать.",
 		"en": "⚙️Set your preferences using /preferences command first! The bot won’t work until you do.",
 	}
-	msgs.AlreadyPremium = map[string]string{
-		"ru": `
-🎉 Вы уже Premium пользователь! 🎉  
-У вас осталось %d дней доступа к Premium. Спасибо за поддержку! 💙  
-Наслаждайтесь неограниченной генерацией предложений!`,
-		"en": `
-🎉 You're already a Premium user! 🎉
+	msgs.AlreadyPremium = map[string]func(int) string{
+		"ru": conjugateAlreadyPremiumMessageRu,
+		"en": func(int) string {
+			return `
+You're already a Premium user!🎉
 You currently have %d days of Premium access left. Thank you for supporting the bot! 💙  
-Enjoy your unlimited sentence generation!`,
+Enjoy your unlimited sentence generation!`
+		},
 	}
 	msgs.PremiumDescription = map[string]string{
-		"ru": "Откройте неограниченную генерацию предложений и доступ к улучшенной ИИ модели.",
-		"en": "Unlock unlimited sentence generation and access a better AI model",
+		"ru": "Откройте неограниченную генерацию предложений",
+		"en": "Unlock unlimited sentence generation",
 	}
 	msgs.LanguageMarkup = map[string]*models.InlineKeyboardMarkup{
 		"ru": &models.InlineKeyboardMarkup{
@@ -192,4 +194,26 @@ Enjoy your unlimited sentence generation!`,
 		},
 	}
 	return &msgs
+}
+
+// conjugateAlreadyPremiumMessageRu returns AlreadyPremium message with conjugated дни word
+func conjugateAlreadyPremiumMessageRu(daysAmount int) string {
+	msg := `
+Вы уже Premium пользователь!🎉  
+У вас %s %d %s доступа к Premium. Спасибо за поддержку! 💙  
+Наслаждайтесь неограниченной генерацией предложений!`
+	d := "дней"
+	left := "осталось"
+	if daysAmount%10 == 1 {
+		d = "день"
+		left = "остался"
+	} else if daysAmount%10 == 2 || daysAmount%10 == 3 || daysAmount%10 == 4 {
+		d = "дня"
+	}
+	preLastDigit := daysAmount % 100 / 10
+	if preLastDigit == 1 {
+		d = "дней"
+		left = "осталось"
+	}
+	return fmt.Sprintf(msg, left, daysAmount, d)
 }

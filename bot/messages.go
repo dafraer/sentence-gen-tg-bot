@@ -70,14 +70,8 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) {
 		return
 	}
 
-	//Use better model if the user has premium
-	geminiVersion := geminiFlash
-	if premium(user) {
-		geminiVersion = geminiPro
-	}
-
 	//Request sentences from gemini
-	res, err := b.geminiClient.Request(ctx, gemini.FormatRequestString(user.Level, user.SentenceLanguage, update.Message.Text, update.Message.From.LanguageCode), geminiVersion)
+	res, err := b.geminiClient.Request(ctx, gemini.FormatRequestString(user.Level, user.SentenceLanguage, update.Message.Text, update.Message.From.LanguageCode), geminiProModel)
 	if err != nil {
 		b.logger.Errorw("error getting response from gemini", "error", err)
 		return
@@ -109,7 +103,7 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) {
 	//Send audio
 	params := &tgbotapi.SendDocumentParams{
 		ChatID:   update.Message.Chat.ID,
-		Document: &models.InputFileUpload{Filename: "audio.mp3", Data: bytes.NewReader(audio.AudioContent)},
+		Document: &models.InputFileUpload{Filename: update.Message.Text + ".mp3", Data: bytes.NewReader(audio.AudioContent)},
 	}
 	if _, err := b.b.SendDocument(ctx, params); err != nil {
 		b.logger.Errorw("error sending document", "error", err)
