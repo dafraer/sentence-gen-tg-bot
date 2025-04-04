@@ -88,6 +88,24 @@ func (b *Bot) processWord(ctx context.Context, update *models.Update) {
 	}
 
 	//Generate mp3 audio
+	//Skip for georgian
+	// TODO fix this shit
+	if user.SentenceLanguage == "ka-GE" {
+		//Send sentences
+		if _, err := b.b.SendMessage(ctx, &tgbotapi.SendMessageParams{ChatID: update.Message.Chat.ID, Text: fmt.Sprintf(b.messages.ResponseMsg[language(update.Message.From)], sentence1, sentence2), ParseMode: models.ParseModeMarkdown}); err != nil {
+			b.logger.Errorw("error sending message", "error", err)
+			return
+		}
+		//Update user data
+		user.LastUsed = time.Now().Unix()
+		if !premium(user) {
+			user.FreeSentences--
+		}
+		if err := b.store.UpdateUser(ctx, user); err != nil {
+			b.logger.Errorw("error updating user", "error", err)
+		}
+		return
+	}
 	audio, err := b.tts.Generate(ctx, sentence1, user.SentenceLanguage)
 	if err != nil {
 		b.logger.Errorw("error generating audio", "error", err)
