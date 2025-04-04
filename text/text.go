@@ -66,10 +66,12 @@ Need help? Just send me a message – @dafraer`,
 	msgs.PreferencesSet = map[string]string{
 		"ru": `
 Всё готово! ✅
-Теперь вы можете отправлять слова, для которых хотите сгенерировать предложения. Просто вводите их по одному, и я всё сделаю!`,
+Теперь вы можете отправлять слова, для которых хотите сгенерировать предложения. Просто вводите их по одному, и я всё сделаю!
+Обратите внимание, что ИИ может иногда допускать неточности и ошибки.`,
 		"en": `
 Everything is set! ✅
-Now you can send the words for which you’d like to generate sentences. Just type them in one by one, and I’ll do the rest!`,
+Now you can send the words for which you’d like to generate sentences. Just type them in one by one, and I’ll do the rest!
+Please note that AI may occasionally make inaccuracies and mistakes.`,
 	}
 	msgs.UnknownCommand = map[string]string{
 		"ru": "Sorry, I don't know this command",
@@ -77,8 +79,8 @@ Now you can send the words for which you’d like to generate sentences. Just ty
 	}
 	msgs.ResponseMsg = map[string]string{
 		//Response messages need escaping \ because they are parsed using telegram's Mark Down Parse mode
-		"ru": "⚠️ Обратите внимание, что ИИ может иногда допускать неточности и ошибки\\.\nВот ваше предложение и перевод на русский:\n``` %s```\n``` %s```",
-		"en": "⚠️ Please note that AI may occasionally make inaccuracies and mistakes\\.\nHere is your sentence and english translation:\n``` %s```\n``` %s```",
+		"ru": "Вот ваше предложение и перевод на русский:\n``` %s```\n``` %s```",
+		"en": "Here is your sentence and english translation:\n``` %s```\n``` %s```",
 	}
 	msgs.TooLong = map[string]string{
 		"ru": "Sorry, your word is too long",

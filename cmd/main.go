@@ -14,11 +14,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		panic("telegram bot token and gemini API key must be passed as arguments")
+	if len(os.Args) < 4 {
+		panic("telegram bot token, gemini API key and Narakeet API key must be passed as arguments")
 	}
 	token := os.Args[1]
 	geminiAPIKey := os.Args[2]
+	narakeetAPIKey := os.Args[3]
 
 	//Declare context that is marked Done when os.Interrupt is called
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -42,7 +43,7 @@ func main() {
 	}()
 
 	//Create tts client
-	ttsClient, err := tts.New(ctx)
+	ttsClient, err := tts.New(ctx, narakeetAPIKey)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +70,7 @@ func main() {
 	}
 
 	//If webhook flag specified run bot using webhook
-	webhook := len(os.Args) == 4 && os.Args[3] == "-w"
+	webhook := len(os.Args) == 5 && os.Args[4] == "-w"
 	if webhook {
 		if err := myBot.RunWebhook(ctx, ":8080"); err != nil {
 			panic(err)
