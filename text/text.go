@@ -87,8 +87,8 @@ Please note that AI may occasionally make inaccuracies and mistakes.`,
 		"en": "Извините, ваше слово слишком длинное",
 	}
 	msgs.BadRequest = map[string]string{
-		"ru": "❌ Извините, я не могу составить предложение с этим словом. Оно может быть неуместным или отсутствовать в выбранном языке.",
-		"en": "❌ Sorry, I can’t generate a sentence with that word. It may be inappropriate or not exist in the selected language.",
+		"ru": "❌ Извините, я не могу составить предложение с этим словом. Оно может быть неуместным или отсутствовать в выбранном языке. Обратите внимание, что слово должно быть написано на языке, который вы выбрали.",
+		"en": "❌ Sorry, I can’t generate a sentence with that word. It may be inappropriate or not exist in the selected language. Note that the word must be written in the chosen language.",
 	}
 	msgs.Premium = map[string]string{
 		"ru": `
