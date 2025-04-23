@@ -113,12 +113,12 @@ Here's a breakdown of the tech powering the bot:
   All user data and state are managed through [**Google Firestore**](https://firebase.google.com/docs/firestore), ensuring speed, scalability, and reliability.
 
 - **Audio Generation**
-    - For major languages (e.g. English, Spanish, Japanese, etc.), audio is generated using the [**Google Text-to-Speech API**](cloud.google.com/text-to-speech).
+    - For major languages (e.g. English, Spanish, Japanese, etc.), audio is generated using the [**Google Text-to-Speech API**](https://cloud.google.com/text-to-speech).
     - For **Georgian**, audio is generated via [**Narakeet**](https://www.narakeet.com/languages/georgian-text-to-speech/#trynow).
     - For **Tatar**, audio is sourced from the [**ISSAI**](https://issai.nu.edu.kz/ru/tatartts-rus/) website.
 
 - **Deployment**  
-  The entire app is deployed on [**Google Cloud Run**](cloud.google.com/run), enabling fast, serverless, and scalable performance.
+  The entire app is deployed on [**Google Cloud Run**](https://cloud.google.com/run), enabling fast, serverless, and scalable performance.
 
 
 
