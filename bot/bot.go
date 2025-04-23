@@ -20,7 +20,7 @@ import (
 
 const (
 	premiumCallback     = "premium"
-	geminiProModel      = "gemini-2.0-pro-exp-02-05"
+	geminiProModel      = "gemini-2.5-pro-preview-03-25"
 	freeSentencesAmount = 50
 	premiumPrice        = 100 //Premium subscription price in Telegram Stars
 	english             = "en"
