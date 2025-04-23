@@ -21,8 +21,8 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#try-luodingo-for-yourself">Try Luodingo for Yourself</a></li>
-        <li><a href="#run-locally-with-docker-compose">Run Locally with Docker Compose</a></li>
+        <li><a href="#try-wordbuddy-for-yourself">Try WordBuddy for Yourself</a></li>
+        <li><a href="#getting-started">Getting started</a></li>
       </ul>
     </li>
     <li><a href="#features">Features</a></li>
