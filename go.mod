@@ -3,17 +3,16 @@ module github.com/dafraer/sentence-gen-tg-bot
 go 1.23.5
 
 require (
+	cloud.google.com/go/firestore v1.18.0
+	cloud.google.com/go/texttospeech v1.11.2
 	github.com/go-telegram/bot v1.14.0
+	go.uber.org/zap v1.27.0
 	google.golang.org/api v0.224.0
 )
 
 require (
-	cloud.google.com/go/firestore v1.18.0 // indirect
-	cloud.google.com/go/texttospeech v1.11.2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	google.golang.org/genproto v0.0.0-20250303144028-a0af3efb3deb // indirect
 )
 
@@ -27,14 +26,11 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/generative-ai-go v0.19.0
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
-	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
 	go.opentelemetry.io/otel v1.34.0 // indirect

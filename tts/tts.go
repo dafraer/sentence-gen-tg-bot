@@ -4,13 +4,19 @@ import (
 	texttospeech "cloud.google.com/go/texttospeech/apiv1"
 	"cloud.google.com/go/texttospeech/apiv1/texttospeechpb"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
-const narakeetAPIEndPoint = "https://api.narakeet.com/text-to-speech/mp3"
+const georgianAPIEndPoint = "https://api.narakeet.com/text-to-speech/mp3"
+
+// !!! Unofficial API - might break
+const tatarAPIEndPoint = "https://issai.nu.edu.kz/tatartts/?speaker=female&text="
 
 type Client struct {
 	tts    *texttospeech.Client
@@ -38,6 +44,10 @@ func (c *Client) Close() error {
 func (c *Client) Generate(ctx context.Context, text string, languageCode string) ([]byte, error) {
 	if languageCode == "ka-GE" {
 		return c.generateGeorgian(ctx, text)
+	}
+
+	if languageCode == "tatar" {
+		return c.generateTatar(ctx, text)
 	}
 	// Perform the text-to-speech request on the text input with the selected voice parameters and audio file type.
 	req := texttospeechpb.SynthesizeSpeechRequest{
@@ -67,7 +77,7 @@ func (c *Client) Generate(ctx context.Context, text string, languageCode string)
 // Separate function for georgian because Google doesn't have georgian tts
 func (c *Client) generateGeorgian(ctx context.Context, text string) ([]byte, error) {
 	//Create new request
-	req, err := http.NewRequestWithContext(ctx, "POST", narakeetAPIEndPoint, strings.NewReader(text))
+	req, err := http.NewRequestWithContext(ctx, "POST", georgianAPIEndPoint, strings.NewReader(text))
 	if err != nil {
 		return nil, err
 	}
@@ -86,4 +96,28 @@ func (c *Client) generateGeorgian(ctx context.Context, text string) ([]byte, err
 	//Get mp3 data from the request
 	audioContent, err := io.ReadAll(resp.Body)
 	return audioContent, err
+}
+
+// !!! Unofficial API - might break
+func (c *Client) generateTatar(ctx context.Context, text string) ([]byte, error) {
+	//Create new request
+	req, err := http.NewRequestWithContext(ctx, "GET", tatarAPIEndPoint+url.QueryEscape(text), http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	//Make a request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get b64 from the response
+	var b64 string
+	if err := json.NewDecoder(resp.Body).Decode(&b64); err != nil {
+		return nil, err
+	}
+
+	//Return decoded mp3 and error
+	return base64.StdEncoding.DecodeString(b64)
 }

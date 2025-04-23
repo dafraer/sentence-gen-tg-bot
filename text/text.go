@@ -168,6 +168,8 @@ Enjoy your unlimited sentence generation!`, n)
 					{Text: "Итальянский", CallbackData: "it-IT"},
 				}, {
 					{Text: "Грузинский", CallbackData: "ka-GE"},
+				}, {
+					{Text: "Татарский", CallbackData: "tatar"},
 				},
 			},
 		},
@@ -195,6 +197,8 @@ Enjoy your unlimited sentence generation!`, n)
 					{Text: "Italian", CallbackData: "it-IT"},
 				}, {
 					{Text: "Georgian", CallbackData: "ka-GE"},
+				}, {
+					{Text: "Tatar", CallbackData: "tatar"},
 				},
 			},
 		},
