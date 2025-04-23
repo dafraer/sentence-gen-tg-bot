@@ -22,7 +22,7 @@
       <a href="#getting-started">Getting Started</a>
       <ul>
         <li><a href="#try-wordbuddy-for-yourself">Try WordBuddy for Yourself</a></li>
-        <li><a href="#getting-started">Getting started</a></li>
+        <li><a href="#run-locally">Run locally</a></li>
       </ul>
     </li>
     <li><a href="#features">Features</a></li>
@@ -60,7 +60,7 @@ Whether you’re learning a new language from scratch or expanding your vocabula
 WordBuddy is available on Telegram! Start learning now by chatting with [@sentencegenbot](https://t.me/sentencegenbot).  
 For a full list of features, check out the [Features](#features) section.
 
-### Run Locally 
+### Run Locally
 You can run WordBuddy locally by following these steps:
 
 #### 1. Set up Google Application Default Credentials 
